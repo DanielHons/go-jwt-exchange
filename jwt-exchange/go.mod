@@ -1,4 +1,4 @@
-module github.com/DanielHons/go-jwt-exchange
+module github.com/DanielHons/go-jwt-exchange/jwt-exchange
 
 go 1.15
 
