@@ -2,12 +2,11 @@ name: Go
 
 on:
   push:
-    branches: [ master ]
+    branches: [ develop ]
   pull_request:
-    branches: [ master ]
+    branches: [ develop ]
 
 jobs:
-
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -35,3 +34,6 @@ jobs:
 
     - name: Test
       run: go test -v .
+
+    - name: Test Lib
+      run: cd jwt_exchange && go test
