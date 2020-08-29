@@ -55,7 +55,3 @@ func TestJwtCreationWithCustomMapper(t *testing.T) {
 	}
 
 }
-
-func TestFailsInThePipeline(t *testing.T) {
-	t.Error("Expected error")
-}
