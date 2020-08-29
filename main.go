@@ -38,6 +38,10 @@ func main() {
 	configureTokenLifetime()
 	jx := createConfig()
 
+	//http.HandleFunc("/tkn/health", func(writer http.ResponseWriter, request *http.Request) {
+	//	writer.WriteHeader(200)
+	//	writer.Write([]byte(`{"status":"up"}`))
+	//})
 	http.HandleFunc("/", ProxyHandler(jx))
 	log.Fatal(http.ListenAndServe(getEnvOrDefault(k_bindAddress, defaultBindAddress), nil))
 }
