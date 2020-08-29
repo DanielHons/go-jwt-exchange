@@ -1,16 +1,18 @@
 package main
 
 import (
-	jwt_exchange "github.com/DanielHons/go-jwt-exchange/jwt-exchange"
+	jwtexchange "github.com/DanielHons/go-jwt-exchange/jwt_exchange"
 	"github.com/dgrijalva/jwt-go"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
 func main() {
-	jx := jwt_exchange.TokenExchangerConfigFromEnv()
+	jx := jwtexchange.TokenExchangerConfigFromEnv()
 	jx.ClaimsMapper = rewriteClaims
+	jx.IncomingTokenHeader = jwtexchange.PlainTokenHeader(os.Getenv("TOKEN_HEADER_IN"))
 	http.HandleFunc("/", jx.ProxyHandler())
 	log.Fatal(http.ListenAndServe(":"+jx.BindPort, nil))
 }

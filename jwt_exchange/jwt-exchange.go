@@ -37,6 +37,20 @@ type TokenHeaderField struct {
 	bearer bool
 }
 
+func PlainTokenHeader(header string) TokenHeaderField {
+	return TokenHeaderField{
+		header: header,
+		bearer: false,
+	}
+}
+
+func BearerTokenHeader(header string) TokenHeaderField {
+	return TokenHeaderField{
+		header: header,
+		bearer: true,
+	}
+}
+
 type jwksCache struct {
 	JwksUrl             string
 	jwksMutex           sync.Mutex
@@ -66,15 +80,14 @@ func TokenExchangerConfigFromEnv() ServiceConfig {
 		jwks:              NewJwksCache(os.Getenv("JWKS_URL"), 24*time.Second),
 		ClaimsMapper:      defaultClaumsMapper,
 		RequestDirector:   defaultDirector(os.Getenv("TARGET_URL")),
+		// The default header configuration is to search for header "Authorization" with Content "Bearer "+$token
 		IncomingTokenHeader: TokenHeaderField{
 			header: getEnvOrDefault("TOKEN_HEADER_IN", authorization),
 			bearer: true,
 		},
-		OutgoingTokenHeader: TokenHeaderField{
-			header: getEnvOrDefault("TOKEN_HEADER_OUT", authorization),
-			bearer: true,
-		},
-		BindPort: getEnvOrDefault("PORT", "3000"),
+		// This configuration can also be written as follows:
+		OutgoingTokenHeader: BearerTokenHeader(getEnvOrDefault("TOKEN_HEADER_OUT", authorization)),
+		BindPort:            getEnvOrDefault("PORT", "3000"),
 	}
 }
 
@@ -140,13 +153,13 @@ func (c *jwksCache) checkToken(tokenString string) (jwt.MapClaims, error) {
 func (config *ServiceConfig) ProxyHandler() func(w http.ResponseWriter, r *http.Request) {
 	proxy := &httputil.ReverseProxy{Director: config.RequestDirector}
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Load the JWKS and keep it fresh
-
 		// Extract claims from
 		token := extractTokenFromIncomingRequest(r, config.IncomingTokenHeader)
 		claims, err := config.jwks.checkToken(token)
 		if err != nil {
+			log.Println("Authentication failed:", err)
 			w.WriteHeader(401)
+			w.Write([]byte(err.Error()))
 			return
 		}
 		newToken, err := config.createInternalToken(claims, config.InternalJwtSecret)
