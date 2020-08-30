@@ -1,0 +1,72 @@
+```
+docker-compose up -d
+
+ALICE_TOKEN="eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCIsImtpZCI6ImRlbW9rZXkifQ.eyJzdWIiOiJBbGljZSJ9.gAUyz_xs0CzyO53aSglqgSW88u_5AiaAwAz_voS4SNdAzIODU5OWsPAa1aWWQ9fCcbbXDW8IQoEfBMY7Qzo__dN_XsPXsGs-Ws-5SXhVd-Jg15cZbCE1-5YQ9-RWfurbBsV5EAIk0QSDNzlwXxIllhPLmogFrFPZCUiND11bvvCo9SqhRH47pCmXhmMxuTPlithEoNAbAWN3ZIzpH4L1OS1e16OAW8nT5CjLxYIoBpAWMou6JU7rjOyotCkRkmSG8kaJf-k69cQ1uEC4wEi8T70i9mdNzah44hOrVqFJHCGENYBw1mr92ax8Snm_TITyH8s-2r4wj16SzjaKBhg1iA"
+BOB_TOKEN="eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCIsImtpZCI6ImRlbW9rZXkifQ.eyJzdWIiOiJCb2IifQ.EYAN78gsT7_P-1MfkYGVPVxKqJijtaEwxqbc5dOXbLWdhbm3-JlHSqzqU-StYQBUOu6MgP5MrTvTqNFPRGIfXnozA2Tv4_JttYZdf3a-ehaw7T8OjJcvw82yGYmDK_j3HzV_fSqqDhaY7N3Aevwt2c8XKV4dTW2yi6K3HgnIApGpYU6VDFyWzyW803F8Yk0bhHTkpM_-sxgXeL-q7j7Uf9WYVqdMFTOUf-Qvcvck16xXPvjQGuPu94_MxHsVXx1WlKgJWuf9QVOECqwDr7Lr5HF2YraIDpUxu40gwUQE5OB6EIMhaHmVZsYfRFeelDtYv2G7T04xT9Mzm8NGz6EcTQ"
+```
+
+Since there are no entries yet, Alice does not see any comments. This is true for bob, too
+```
+curl "http://localhost:9002/comment" -H "Authorization: $ALICE_TOKEN"
+```
+
+Now let us create a new comment with Alice.
+
+```
+curl -X "POST" "http://localhost:9002/comment" \
+     -H "Authorization: $ALICE_TOKEN" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -d $'{
+  "text": "Hello world"
+}'
+
+```
+
+Now, Alice will see one result if querying the table, but Bob will not:
+```
+curl "http://localhost:9002/comment" -H "Authorization: $ALICE_TOKEN"
+
+curl "http://localhost:9002/comment" -H "Authorization: $BOB_TOKEN"
+```
+
+
+
+Private key that belongs to the JKW above (demokey.json). Use it to sign own tokens for further testing.
+```
+-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCgU15agnNRJUxi
+yGI1UuTWkh7DwDuOVf7pQiArHLkOlyYuvNLMY4DOGxWwW4X5eWN/5gbaHuTDiH3t
+WMwwERvR2zNsOl4B4e8mw8du8jXdc6H8LIsWV5cFqC08yAZ1iYJ32gmWnkWXl8VH
+ysYWezicwYbf0mrHT0gUOcfxG8CXSrDb3d74eJBHY+kPMJbLPetQU9XXPej38JgS
+rLmFQSnuXYbsigcD1BHQ2ayOGit/Eqdzs5jblBrUmadeCpwT4ph/woIzrONh5dOA
+d9kHpMOnSW8Wi6TrdUvIQjf8j2yzPjDyLSE77ey6dLUpo+0uwqEzoKbl/+L+VMxm
+antWcPCRAgMBAAECggEAFmuyPTwS/l0V8paNTWG7SNqEXOGsMnqKPHqX3w+UPZsb
+ptuXKygbIjedb91Mvhegt4kmmihJ26Jh4ehSHcK2vkFGTrNW5DKBbE1ivXw31jFO
+jOJ5zPUQ1KSxNtfON2+0hChEwQB/QPTjjOepjglLYHib8P8PGbJXpSRzdp9n7oA1
+i/Dh5A+soKolpeVLY3sUF8qdWruWTxkYEMiDpqbSrdBidM285HaPINDiIZFERG5B
+S2DhekOaxGQnn7N+y+wykR68KWVzxUSn18kDSqQTO5IOa8DSvJCaghm/K0KFT7rs
+uoY6Opoz8tVR8XcOe8A34ahifjzUOvt78Oqz+Dx0QQKBgQDfwRv9mXaZlvfPJB9Y
+zMi0/n5upcOZOYgyRmZPRgy5LOqw/tAGISIsV8fjcFTVIrtJ+51kPmGzTTlBrDXV
+NcoyIDzGjisMwWL0zUh/e8vvVfY0gASV+bpyUS0GGNNLwoViH/yVkRfnCUzTxYdu
+Dl+kgHLRKUpuJy/PJG7Zm8aeWQKBgQC3bjUM1d85d0dq1kmLvGmo/FAbGIkrm603
+6JUPdk1YzMJoSfQqx0fZQYolyIKckCtLqJKJVC3vMkTT3Sah9Q5Nef5runecSLxh
+KN40RCmOsTV0BbEG6rWYnVCnw5DC/y8sIWgxlxqNhqnFqQU6+hmJCRdtz7jEbMk7
+0KS1nmLM+QKBgQCG+AlWU/fCddpNTNDL09tNsiW5wKvYBWguS2DzeKG8IWgAE/SP
+ffULIngkrWG+nxCyc+Bg03BDo9Vh0+s1DRlGW0PN0XwOWajDWgDdRWOinwvAZ2hc
+vyLESksKXnc2P8QNiJXn8nmkl2uMYp5quKjgpcqceHe5MlIYdTWYdeq9IQKBgQCg
+ZrnzQG7UVK7aCQsFK7yFriXqm9kPjjG6CyOWAtB+T4fNJKZkZiE5JWvFwIIeoJ+L
+qJyDhF4qph2z2ta2l5FrRLurvsJrottAZzlwIQ7qHaJtk7CLKOGl1CM8oPJM4lOA
+1rHDc6wfiFubYkMVoLCFubKILzYWZj7OlJQD0b36GQKBgFEuAr6O7Q1vLuu0qBb7
+xYxjapaRnaQRZPP6q29qjF/BMumsdZtlggIQgs0yrwJVh2d4nDnlVPJnhEvpy7yf
+hJ1n3fzLfzCSRBRJ3uNLlpgZkeFB0JIKnoinTx6d/OTa7Ke9Uf0jp6U1a+lDnbGo
+oydfgdUgr7RjcGZYVRP5UHrS
+-----END PRIVATE KEY-----
+```
+
+Tokens
+```
+Alice: eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCIsImtpZCI6ImRlbW9rZXkifQ.eyJzdWIiOiJBbGljZSJ9.gAUyz_xs0CzyO53aSglqgSW88u_5AiaAwAz_voS4SNdAzIODU5OWsPAa1aWWQ9fCcbbXDW8IQoEfBMY7Qzo__dN_XsPXsGs-Ws-5SXhVd-Jg15cZbCE1-5YQ9-RWfurbBsV5EAIk0QSDNzlwXxIllhPLmogFrFPZCUiND11bvvCo9SqhRH47pCmXhmMxuTPlithEoNAbAWN3ZIzpH4L1OS1e16OAW8nT5CjLxYIoBpAWMou6JU7rjOyotCkRkmSG8kaJf-k69cQ1uEC4wEi8T70i9mdNzah44hOrVqFJHCGENYBw1mr92ax8Snm_TITyH8s-2r4wj16SzjaKBhg1iA
+
+Bob: eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCIsImtpZCI6ImRlbW9rZXkifQ.eyJzdWIiOiJCb2IifQ.EYAN78gsT7_P-1MfkYGVPVxKqJijtaEwxqbc5dOXbLWdhbm3-JlHSqzqU-StYQBUOu6MgP5MrTvTqNFPRGIfXnozA2Tv4_JttYZdf3a-ehaw7T8OjJcvw82yGYmDK_j3HzV_fSqqDhaY7N3Aevwt2c8XKV4dTW2yi6K3HgnIApGpYU6VDFyWzyW803F8Yk0bhHTkpM_-sxgXeL-q7j7Uf9WYVqdMFTOUf-Qvcvck16xXPvjQGuPu94_MxHsVXx1WlKgJWuf9QVOECqwDr7Lr5HF2YraIDpUxu40gwUQE5OB6EIMhaHmVZsYfRFeelDtYv2G7T04xT9Mzm8NGz6EcTQ
+
+```
