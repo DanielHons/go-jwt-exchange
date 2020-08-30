@@ -1,9 +1,9 @@
 # go jwt exchange
 A lightweight webproxy to exchange an authorization token.
 
-##### Develop
+##### CI/CD
 ![Go](https://github.com/DanielHons/go-jwt-exchange/workflows/Go/badge.svg?branch=develop)
-
+![Docker Push](https://github.com/DanielHons/go-jwt-exchange/workflows/Docker%20Push/badge.svg)
 
 #### Use
 The desired usecase is to translate an incoming Jason Web Token (JWT) into any outgoing authentication token (which does not have to be a JWT) before passing the request to a backend service.

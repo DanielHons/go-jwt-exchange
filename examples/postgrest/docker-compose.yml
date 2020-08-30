@@ -36,10 +36,6 @@ services:
       - pod
     volumes:
      - "./db:/docker-entrypoint-initdb.d/"
-  authinfo:
-    image: nginx
-    networks:
-      - pod
 
 networks:
   pod:

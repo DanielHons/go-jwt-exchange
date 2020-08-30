@@ -1,16 +1,37 @@
 ```
-{
-    "kty": "RSA",
-    "e": "AQAB",
-    "use": "sig",
-    "kid": "demokey",
-    "alg": "RS512",
-    "n": "oFNeWoJzUSVMYshiNVLk1pIew8A7jlX-6UIgKxy5DpcmLrzSzGOAzhsVsFuF-Xljf-YG2h7kw4h97VjMMBEb0dszbDpeAeHvJsPHbvI13XOh_CyLFleXBagtPMgGdYmCd9oJlp5Fl5fFR8rGFns4nMGG39Jqx09IFDnH8RvAl0qw293e-HiQR2PpDzCWyz3rUFPV1z3o9_CYEqy5hUEp7l2G7IoHA9QR0NmsjhorfxKnc7OY25Qa1JmnXgqcE-KYf8KCM6zjYeXTgHfZB6TDp0lvFouk63VLyEI3_I9ssz4w8i0hO-3sunS1KaPtLsKhM6Cm5f_i_lTMZmp7VnDwkQ"
-}
+docker-compose up -d
+
+ALICE_TOKEN="eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCIsImtpZCI6ImRlbW9rZXkifQ.eyJzdWIiOiJBbGljZSJ9.gAUyz_xs0CzyO53aSglqgSW88u_5AiaAwAz_voS4SNdAzIODU5OWsPAa1aWWQ9fCcbbXDW8IQoEfBMY7Qzo__dN_XsPXsGs-Ws-5SXhVd-Jg15cZbCE1-5YQ9-RWfurbBsV5EAIk0QSDNzlwXxIllhPLmogFrFPZCUiND11bvvCo9SqhRH47pCmXhmMxuTPlithEoNAbAWN3ZIzpH4L1OS1e16OAW8nT5CjLxYIoBpAWMou6JU7rjOyotCkRkmSG8kaJf-k69cQ1uEC4wEi8T70i9mdNzah44hOrVqFJHCGENYBw1mr92ax8Snm_TITyH8s-2r4wj16SzjaKBhg1iA"
+BOB_TOKEN="eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCIsImtpZCI6ImRlbW9rZXkifQ.eyJzdWIiOiJCb2IifQ.EYAN78gsT7_P-1MfkYGVPVxKqJijtaEwxqbc5dOXbLWdhbm3-JlHSqzqU-StYQBUOu6MgP5MrTvTqNFPRGIfXnozA2Tv4_JttYZdf3a-ehaw7T8OjJcvw82yGYmDK_j3HzV_fSqqDhaY7N3Aevwt2c8XKV4dTW2yi6K3HgnIApGpYU6VDFyWzyW803F8Yk0bhHTkpM_-sxgXeL-q7j7Uf9WYVqdMFTOUf-Qvcvck16xXPvjQGuPu94_MxHsVXx1WlKgJWuf9QVOECqwDr7Lr5HF2YraIDpUxu40gwUQE5OB6EIMhaHmVZsYfRFeelDtYv2G7T04xT9Mzm8NGz6EcTQ"
+```
+
+Since there are no entries yet, Alice does not see any comments. This is true for bob, too
+```
+curl "http://localhost:9002/comment" -H "Authorization: $ALICE_TOKEN"
+```
+
+Now let us create a new comment with Alice.
+
+```
+curl -X "POST" "http://localhost:9002/comment" \
+     -H "Authorization: $ALICE_TOKEN" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -d $'{
+  "text": "Hello world"
+}'
+
+```
+
+Now, Alice will see one result if querying the table, but Bob will not:
+```
+curl "http://localhost:9002/comment" -H "Authorization: $ALICE_TOKEN"
+
+curl "http://localhost:9002/comment" -H "Authorization: $BOB_TOKEN"
 ```
 
 
-Private key
+
+Private key that belongs to the JKW above (demokey.json). Use it to sign own tokens for further testing.
 ```
 -----BEGIN PRIVATE KEY-----
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCgU15agnNRJUxi
@@ -44,7 +65,8 @@ oydfgdUgr7RjcGZYVRP5UHrS
 
 Tokens
 ```
-Alice: eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbGljZSJ9.kXa7V9PhKRA3QoC4PF1iLB6KHlsfGetwM4swsu0bYyPq58dp8Rxe_lCPPeE-szzSaF5-S2yML2StIWmthzgcHlxopPawzMc4CXR7EbgEhhF_5vw0N-iXnIqlVBgMY4YNsGoN4AuUzf-n0GPxqgu4G0jOLrZBXrczbj0aw-TobprG40hbZr0AeL_UaucerX56Oq2f6zF4xfnicp1-ftGE9-SN4kyA4JHDwRCOOHFa9PDDch9E0RbCp3U8TazRn-nw24-cKEMWiBzZTrwP_q8-O8kq2sXmbiQN8ye2jewR7sJFKR5Tsk4wAlzQl2BehMfId3Ehqrl_bvhuGxLAKQ1kOw
+Alice: eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCIsImtpZCI6ImRlbW9rZXkifQ.eyJzdWIiOiJBbGljZSJ9.gAUyz_xs0CzyO53aSglqgSW88u_5AiaAwAz_voS4SNdAzIODU5OWsPAa1aWWQ9fCcbbXDW8IQoEfBMY7Qzo__dN_XsPXsGs-Ws-5SXhVd-Jg15cZbCE1-5YQ9-RWfurbBsV5EAIk0QSDNzlwXxIllhPLmogFrFPZCUiND11bvvCo9SqhRH47pCmXhmMxuTPlithEoNAbAWN3ZIzpH4L1OS1e16OAW8nT5CjLxYIoBpAWMou6JU7rjOyotCkRkmSG8kaJf-k69cQ1uEC4wEi8T70i9mdNzah44hOrVqFJHCGENYBw1mr92ax8Snm_TITyH8s-2r4wj16SzjaKBhg1iA
 
-Bob: eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJCb2IifQ.fEBKBZ0_b6Uoxrej4quRVqbHEQW7f6RhSaqzktQNl_w1X1qtYqzRucOCF4B-kdwQqH1CoPTtU5wyX8MHrQhwpwBHpllghUVfEmmrEeZ0BGj_9wc786UJagsunq5P8I9cCr5sWN63Z3Nai5a1Fu7-a4Qymm3apFsX991im31miwuKbrZKYgBpcAP6Li-OBe2JAkbpyQiEIVltmDoviQ376Tp5KLOFstzZmbmmsiRoP1foXbFCLjQo1zDyjPLx8yM95tKYevbdWtDpmqdFSsvrpp8to6AtKxWqwU_WbePzVSvDYrEXf2Y3pQUt_X1ND-dObQLSdFr9v8nwwrs_nmqvjQ
+Bob: eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCIsImtpZCI6ImRlbW9rZXkifQ.eyJzdWIiOiJCb2IifQ.EYAN78gsT7_P-1MfkYGVPVxKqJijtaEwxqbc5dOXbLWdhbm3-JlHSqzqU-StYQBUOu6MgP5MrTvTqNFPRGIfXnozA2Tv4_JttYZdf3a-ehaw7T8OjJcvw82yGYmDK_j3HzV_fSqqDhaY7N3Aevwt2c8XKV4dTW2yi6K3HgnIApGpYU6VDFyWzyW803F8Yk0bhHTkpM_-sxgXeL-q7j7Uf9WYVqdMFTOUf-Qvcvck16xXPvjQGuPu94_MxHsVXx1WlKgJWuf9QVOECqwDr7Lr5HF2YraIDpUxu40gwUQE5OB6EIMhaHmVZsYfRFeelDtYv2G7T04xT9Mzm8NGz6EcTQ
+
 ```
