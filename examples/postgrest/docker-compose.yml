@@ -19,7 +19,7 @@ services:
       PGRST_JWT_SECRET: "${JWT_SECRET}"
       PGRST_JWT_AUD: "${OUTGOING_AUDIENCE}"
       PGRST_DB_URI: postgres://app_user:password@db:5432/app_db
-      PGRST_DB_SCHEMA: public
+      PGRST_DB_SCHEMA: api
       PGRST_DB_ANON_ROLE: app_user #In production this role should not be the same as the one used for the connection
       PGRST_SERVER_PROXY_URI: "http://127.0.0.1:3000"
     depends_on:
@@ -34,8 +34,12 @@ services:
       POSTGRES_PASSWORD: password
     networks:
       - pod
-  # Uncomment this if you want to persist the data.
-  # volumes:
-  #   - "./pgdata:/var/lib/postgresql/data"
+    volumes:
+     - "./db:/docker-entrypoint-initdb.d/"
+  authinfo:
+    image: nginx
+    networks:
+      - pod
+
 networks:
   pod:

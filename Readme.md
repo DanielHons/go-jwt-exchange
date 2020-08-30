@@ -32,13 +32,33 @@ func main() {
 }
 ``` 
 
+### Validation of incoming tokens
+In the default configuration, a Jason Web Key Set (JWKS) is loaded from the URL provided in the environment variable `JWKS_URL`.
+This JWKS will be used to validate the incoming token.
+
+If one needs another validation logic, the current implemention would require to provide a custom implementation for the TokenReader interface:
+```go
+type MyCustomTokenReader struct{
+ // ...
+}
+
+func (r MyCustomTokenReader) validate(token string) (jwt.MapClaims, error){
+    var tokenClaims: jwt.MapClaims
+    //tokenClaims["sub"] = //...
+    return tokenClaims
+
+}
+
+proxy.Config.TokenReader = MyCustomTokenReader{}
+``` 
+
+### Configure the token exchange
 The proxy contains a configuration with default values read from environment variables but can be changed programatically as well, like
+
 
 ```go
 proxy.Config.OutgoingTokenPrefix="" // Do not use "Bearer " prefix
 ```
-
-### Configure the token exchange
 
 | Config Property            | Meaning                                                          | Example                         | Environment variable  | Default  |     
 |----------------------------|------------------------------------------------------------------| --------------------------------|-----------------------| ----------------------|     
