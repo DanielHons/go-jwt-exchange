@@ -2,7 +2,9 @@ name: Docker Push
 
 on:
   push:
-    branches: [ master ]
+    branches: [ develop ]
+  tags:
+    - v*
 jobs:
   build:
     name: Build
@@ -18,5 +20,4 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           repository: danielhons/jwt-exchange
           tag_with_ref: true
-          # runs if a tag is pushed to master
           push: ${{ startsWith(github.ref, 'refs/tags/') }}
