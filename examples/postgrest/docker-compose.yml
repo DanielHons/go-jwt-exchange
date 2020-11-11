@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   tx:
-    image: danielhons/jwt-exchange:v0.03
+    image: danielhons/jwt-exchange:latest
     ports:
     - "9002:9002"
     env_file:
