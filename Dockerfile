@@ -13,8 +13,14 @@ FROM alpine:3.7
 # set working directory
 WORKDIR /root
 
-ENV PORT 8082
-ENV SERVICE_URL http://localhost:8082
+ENV JWKS_URL ""
+ENV JWT_SECRET ""
+ENV BIND_ADDRESS "0.0.0.0:9002"
+ENV TARGET_URL ""
+ENV TOKEN_HEADER_IN "Authorization"
+ENV TOKEN_HEADER_OUT "Authorization"
+ENV OUTGOING_AUDIENCE ""
+ENV OUTGOING_TOKEN_TTL_SEC "3"
 
 # copy the binary from builder
 COPY --from=builder /go/src/app/main .

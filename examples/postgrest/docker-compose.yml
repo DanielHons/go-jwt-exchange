@@ -1,0 +1,41 @@
+version: "3.7"
+
+services:
+  tx:
+    image: danielhons/jwt-exchange:latest
+    ports:
+    - "9002:9002"
+    env_file:
+      - .env
+    networks:
+      - pod
+  postgrest:
+    image: postgrest/postgrest
+    ports:
+      - "3000:3000"
+    networks:
+      - pod
+    environment:
+      PGRST_JWT_SECRET: "${JWT_SECRET}"
+      PGRST_JWT_AUD: "${OUTGOING_AUDIENCE}"
+      PGRST_DB_URI: postgres://app_user:password@db:5432/app_db
+      PGRST_DB_SCHEMA: api
+      PGRST_DB_ANON_ROLE: app_user #In production this role should not be the same as the one used for the connection
+      PGRST_SERVER_PROXY_URI: "http://127.0.0.1:3000"
+    depends_on:
+      - db
+  db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: app_db
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: password
+    networks:
+      - pod
+    volumes:
+     - "./db:/docker-entrypoint-initdb.d/"
+
+networks:
+  pod:
