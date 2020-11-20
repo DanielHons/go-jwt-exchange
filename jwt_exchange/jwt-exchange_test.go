@@ -7,17 +7,14 @@ import (
 
 func TestJwtCreation(t *testing.T) {
 	creator := JwtCreator_HS256{
-		ClaimsMapper: func(claims jwt.MapClaims) jwt.Claims {
-			return claims
-		},
 		JwtSecret: []byte("VerySecureSecret"),
 	}
 
 	claims := jwt.MapClaims{}
 	claims["sub"] = "TestUser"
-	claims["exp"] = 64 // should not be ovewritten since the claimsMapper is default
+	claims["exp"] = 64
 
-	token, err := creator.createToken(claims)
+	token, err := creator.CreateToken(claims)
 
 	if err != nil {
 		t.Error("Could not create token: ", err)
@@ -32,18 +29,14 @@ func TestJwtCreation(t *testing.T) {
 
 func TestJwtCreationWithCustomMapper(t *testing.T) {
 	creator := JwtCreator_HS256{
-		ClaimsMapper: func(claims jwt.MapClaims) jwt.Claims {
-			claims["exp"] = 4711 //changed
-			return claims
-		},
 		JwtSecret: []byte("VerySecureSecret"),
 	}
 
 	claims := jwt.MapClaims{}
 	claims["sub"] = "TestUser"
-	claims["exp"] = 64 // should be ovewritten by the mapper
+	claims["exp"] = 4711 // should be ovewritten by the mapper
 
-	token, err := creator.createToken(claims)
+	token, err := creator.CreateToken(claims)
 
 	if err != nil {
 		t.Error("Could not create token: ", err)
