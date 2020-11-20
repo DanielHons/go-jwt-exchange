@@ -4,10 +4,8 @@ import (
 	"github.com/DanielHons/go-jwt-exchange/jwt_exchange"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -53,7 +51,7 @@ func main() {
 			HeaderName: getEnvOrDefault(k_tokenHeaderOut, authorization),
 			Prefix:     bearerPrefix,
 		},
-		Director:        defaultDirector(os.Getenv(k_proxyTargetUrl)),
+		Director:        jwt_exchange.DefaultProxyDirector(os.Getenv(k_proxyTargetUrl)),
 		RejectOnNoToken: true,
 	}
 
@@ -81,20 +79,4 @@ func readTokenLifetimeFromEnv() int64 {
 		return defaultTokenLifetimeSeconds
 	}
 	return int64(atoi)
-}
-
-func defaultDirector(rawUrl string) func(req *http.Request) {
-	targetUrl := rawUrl
-	origin, _ := url.Parse(targetUrl)
-	director := func(req *http.Request) {
-		req.Header.Add("X-Forwarded-Host", req.Host)
-		req.Header.Add("X-Origin-Host", origin.Host)
-		req.URL.Scheme = extractProtocol(targetUrl)
-		req.URL.Host = origin.Host
-	}
-	return director
-}
-
-func extractProtocol(targetUrl string) string {
-	return strings.Split(targetUrl, "://")[0]
 }

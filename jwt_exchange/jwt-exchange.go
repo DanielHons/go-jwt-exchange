@@ -4,9 +4,26 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"strings"
 	"time"
 )
+
+func DefaultProxyDirector(rawUrl string) func(req *http.Request) {
+	targetUrl := rawUrl
+	origin, _ := url.Parse(targetUrl)
+	director := func(req *http.Request) {
+		req.Header.Add("X-Forwarded-Host", req.Host)
+		req.Header.Add("X-Origin-Host", origin.Host)
+		req.URL.Scheme = extractProtocol(targetUrl)
+		req.URL.Host = origin.Host
+	}
+	return director
+}
+
+func extractProtocol(targetUrl string) string {
+	return strings.Split(targetUrl, "://")[0]
+}
 
 type ClaimsMapper interface {
 	mapClaims(claims jwt.MapClaims) (jwt.MapClaims, error)
