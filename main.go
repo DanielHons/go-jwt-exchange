@@ -25,12 +25,10 @@ const defaultTokenLifetimeSeconds = 3
 
 func main() {
 
-	jwksCache := jwt_exchange.JwksCache{
-		JwksUrl:             os.Getenv(k_jwksUrl),
-		JwksRefreshInterval: 24 * time.Hour,
-	}
+	jwksCache := jwt_exchange.StartNewJwkCache(os.Getenv(k_jwksUrl),
+		24*time.Hour, true,
+	)
 
-	_ = jwksCache.ReloadJwks()
 	handler := jwt_exchange.TokenExchangeHandler{
 		ClaimsExtractor: jwt_exchange.JwksClaimsExtractor{
 			Validator: &jwksCache,

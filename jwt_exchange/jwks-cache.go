@@ -6,38 +6,67 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/lestrrat-go/jwx/jwk"
 	"log"
-	"sync"
 	"time"
 )
 
-type JwksCache struct {
-	JwksUrl             string
-	jwksMutex           sync.Mutex
-	JwksRefreshInterval time.Duration
-	lastRefresh         int64
-	jwkSet              *jwk.Set
+type jwksCache struct {
+	JwksUrl     string
+	lastRefresh int64
+	jwkSet      *jwk.Set
 }
 
-func (c *JwksCache) ReloadJwks() error {
-	log.Println("Refreshing jwk set from " + c.JwksUrl)
-	set, err := jwk.FetchHTTP(c.JwksUrl)
+func StartNewJwkCache(jwksUrl string, refreshInterval time.Duration, stopOnError bool) jwksCache {
+	cache := jwksCache{
+		JwksUrl:     jwksUrl,
+		lastRefresh: 0,
+		jwkSet:      nil,
+	}
+	err := cache.reloadInner()
 	if err != nil {
-		log.Println("ERROR fetching jwk set from " + c.JwksUrl)
+		const msg = "JWK set could not be initially loaded - no token can be verified"
+		if stopOnError {
+			log.Fatal(msg)
+		} else {
+			log.Println(msg)
+		}
+	}
+	refreshTicker := time.NewTicker(refreshInterval)
+
+	go func() {
+		for {
+			<-refreshTicker.C
+			cache.reload()
+		}
+	}()
+
+	return cache
+}
+
+func (cache jwksCache) reload() {
+	err := cache.reloadInner()
+	if err != nil {
+		log.Println("error reloading jwks: " + err.Error())
+	}
+}
+
+func (cache *jwksCache) reloadInner() error {
+	set, err := jwk.FetchHTTP(cache.JwksUrl)
+	if err != nil {
 		return err
 	}
-	c.jwkSet = set
-	c.lastRefresh = time.Now().Unix()
-	log.Println("jwk set refreshedL")
+	cache.jwkSet = set
+	cache.lastRefresh = time.Now().Unix()
+	log.Println("successfully reloaded JWK set from " + cache.JwksUrl)
 	return nil
 }
 
-func (c *JwksCache) getKey(token *jwt.Token) (interface{}, error) {
+func (cache *jwksCache) getKey(token *jwt.Token) (interface{}, error) {
 	keyID, ok := token.Header["kid"].(string)
 	if !ok {
 		return nil, errors.New("expecting JWT header to have string kid")
 	}
 
-	if key := c.jwkSet.LookupKeyID(keyID); len(key) == 1 {
+	if key := cache.jwkSet.LookupKeyID(keyID); len(key) == 1 {
 		var k interface{}
 		err := key[0].Raw(&k)
 		return k, err
@@ -46,24 +75,11 @@ func (c *JwksCache) getKey(token *jwt.Token) (interface{}, error) {
 	return nil, fmt.Errorf("unable to find key %q", keyID)
 }
 
-func (c *JwksCache) Validate(tokenString string) (jwt.MapClaims, error) {
-	c.refreshIfRequired()
-	token, err := jwt.Parse(tokenString, c.getKey)
+func (cache *jwksCache) Validate(tokenString string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, cache.getKey)
 	if err != nil {
 		return nil, err
 	}
 	claims := token.Claims.(jwt.MapClaims)
 	return claims, nil
-}
-
-func (c *JwksCache) refreshIfRequired() {
-	if c.lastRefresh+c.JwksRefreshInterval.Milliseconds()/1000 < time.Now().Unix() {
-		log.Println("Refreshing outdated JWKS")
-		go func() {
-			// this can wait till the request was handled
-			c.jwksMutex.Lock()
-			defer c.jwksMutex.Unlock()
-			_ = c.ReloadJwks() //fire and forget
-		}()
-	}
 }

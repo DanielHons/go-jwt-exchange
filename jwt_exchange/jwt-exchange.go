@@ -26,7 +26,7 @@ func extractProtocol(targetUrl string) string {
 }
 
 type ClaimsMapper interface {
-	mapClaims(claims jwt.MapClaims) (jwt.MapClaims, error)
+	MapClaims(claims jwt.MapClaims) (jwt.Claims, error)
 }
 
 type GenericClaimsMapper struct {
@@ -34,18 +34,37 @@ type GenericClaimsMapper struct {
 	Audience string
 }
 
-func (gtm GenericClaimsMapper) mapClaims(claims jwt.MapClaims) (jwt.MapClaims, error) {
+type StringExtractingClaimsMapper struct {
+	TokenTTL    int64
+	Audience    string
+	Extractor   func(claims jwt.MapClaims) string
+	OutClaimKey string
+}
+
+// Implement ClaimsMapper interface
+func (secm StringExtractingClaimsMapper) MapClaims(inClaims jwt.MapClaims) (jwt.Claims, error) {
+	outClaims := DefaultClaims(inClaims["sub"].(string), secm.TokenTTL, secm.Audience)
+	outClaims[secm.OutClaimKey] = secm.Extractor(inClaims)
+	return outClaims, nil
+}
+
+// Take subject from incoming claim, override iat,nbf,exp and potentially aud
+func DefaultClaims(sub string, ttl int64, aud string) jwt.MapClaims {
 	unix := time.Now().Unix()
 	mapClaims := jwt.MapClaims{}
-	mapClaims["sub"] = claims["sub"].(string)
+	mapClaims["sub"] = sub
 	mapClaims["iat"] = unix
 	mapClaims["nbf"] = unix
-	mapClaims["exp"] = unix + gtm.TokenTTL
-	if len(gtm.Audience) > 0 {
-		mapClaims["aud"] = gtm.Audience
+	mapClaims["exp"] = unix + ttl
+	if len(aud) > 0 {
+		mapClaims["aud"] = aud
 	}
 
-	return mapClaims, nil
+	return mapClaims
+}
+
+func (gtm GenericClaimsMapper) MapClaims(claims jwt.MapClaims) (jwt.Claims, error) {
+	return DefaultClaims(claims["sub"].(string), gtm.TokenTTL, gtm.Audience), nil
 }
 
 type TokenExchangeConfig struct {
@@ -69,7 +88,7 @@ type TokenValidator interface {
 
 // Creates the outgoing token from provided claims
 type TokenCreator interface {
-	CreateToken(orginalClaims jwt.MapClaims) (string, error)
+	CreateToken(orginalClaims jwt.Claims) (string, error)
 }
 
 type GenericTokenCreator struct {
@@ -84,7 +103,7 @@ type JwtCreator_HS256 struct {
 	JwtSecret []byte
 }
 
-func (j JwtCreator_HS256) CreateToken(inputClaims jwt.MapClaims) (string, error) {
+func (j JwtCreator_HS256) CreateToken(inputClaims jwt.Claims) (string, error) {
 	internalToken, signingErr := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		inputClaims).SignedString(j.JwtSecret)
 	if signingErr != nil {
@@ -153,7 +172,7 @@ func (teh TokenExchangeHandler) createToken(r *http.Request) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	newClaims, err := teh.ClaimsMapper.mapClaims(originalClaims)
+	newClaims, err := teh.ClaimsMapper.MapClaims(originalClaims)
 	if err != nil {
 		return "", err
 	}
