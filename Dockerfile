@@ -1,10 +1,9 @@
 FROM golang:1.15.0-buster as builder
 RUN go get github.com/dgrijalva/jwt-go
-RUN go get github.com/DanielHons/go-jwt-exchange/jwt_exchange
 WORKDIR /go/src/app
-ADD main.go main.go
+ADD ./ ./
 # build the source
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/go-jwt-exchange
 
 # use a minimal alpine image
 FROM alpine:3.7

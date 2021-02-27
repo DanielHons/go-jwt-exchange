@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/DanielHons/go-jwt-exchange/jwt_exchange"
+	"github.com/DanielHons/go-jwt-exchange/pkg/jwt_exchange"
 	"log"
 	"net/http"
 	"os"
