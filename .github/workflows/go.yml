@@ -21,7 +21,8 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Get dependencies
-      run: go get -u -v -f all
+      run: |
+        go get -v -t -d ./...
 
     - name: Test Lib
       run: go test ./pkg/*
