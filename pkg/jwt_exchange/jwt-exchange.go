@@ -30,30 +30,17 @@ type ClaimsMapper interface {
 	MapClaims(claims jwt.MapClaims) (jwt.Claims, error)
 }
 
-type GenericClaimsMapper struct {
-	TokenTTL int64
-	Audience string
-}
-
-type StringExtractingClaimsMapper struct {
-	TokenTTL    int64
-	Audience    string
-	Extractor   func(claims jwt.MapClaims) string
-	OutClaimKey string
-}
-
-// Implement ClaimsMapper interface
-func (secm StringExtractingClaimsMapper) MapClaims(inClaims jwt.MapClaims) (jwt.Claims, error) {
-	outClaims := DefaultClaims(inClaims["sub"].(string), secm.TokenTTL, secm.Audience)
-	outClaims[secm.OutClaimKey] = secm.Extractor(inClaims)
-	return outClaims, nil
+type FancyClaimsMapper struct {
+	TokenTTL     int64
+	Audience     string
+	StaticClaims map[string]string
+	MappedClaims map[string]string
 }
 
 // Take subject from incoming claim, override iat,nbf,exp and potentially aud
-func DefaultClaims(sub string, ttl int64, aud string) jwt.MapClaims {
+func DefaultClaims(ttl int64, aud string) jwt.MapClaims {
 	unix := time.Now().Unix()
 	mapClaims := jwt.MapClaims{}
-	mapClaims["sub"] = sub
 	mapClaims["iat"] = unix
 	mapClaims["nbf"] = unix
 	mapClaims["exp"] = unix + ttl
@@ -64,8 +51,15 @@ func DefaultClaims(sub string, ttl int64, aud string) jwt.MapClaims {
 	return mapClaims
 }
 
-func (gtm GenericClaimsMapper) MapClaims(claims jwt.MapClaims) (jwt.Claims, error) {
-	return DefaultClaims(claims["sub"].(string), gtm.TokenTTL, gtm.Audience), nil
+func (fcm FancyClaimsMapper) MapClaims(claims jwt.MapClaims) (jwt.Claims, error) {
+	outClaims := DefaultClaims(fcm.TokenTTL, fcm.Audience)
+	for r, s := range fcm.StaticClaims {
+		outClaims[r] = s
+	}
+	for r, s := range fcm.MappedClaims {
+		outClaims[r] = claims[s]
+	}
+	return outClaims, nil
 }
 
 type TokenExchangeConfig struct {
