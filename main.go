@@ -24,7 +24,6 @@ const bearerPrefix = "Bearer "
 const defaultTokenLifetimeSeconds = 3
 
 func main() {
-
 	jwksCache := jwt_exchange.StartNewJwkCache(os.Getenv(k_jwksUrl),
 		24*time.Hour, true,
 	)
@@ -49,8 +48,7 @@ func main() {
 			HeaderName: getEnvOrDefault(k_tokenHeaderOut, authorization),
 			Prefix:     bearerPrefix,
 		},
-		Director:        jwt_exchange.DefaultProxyDirector(os.Getenv(k_proxyTargetUrl)),
-		RejectOnNoToken: true,
+		Director: jwt_exchange.DefaultProxyDirector(os.Getenv(k_proxyTargetUrl)),
 	}
 
 	http.HandleFunc("/", handler.ProxyHandler())

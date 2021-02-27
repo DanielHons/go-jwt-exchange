@@ -2,6 +2,7 @@ package jwt_exchange
 
 import (
 	"github.com/dgrijalva/jwt-go"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -164,7 +165,6 @@ type TokenExchangeHandler struct {
 	TokenCreator      TokenCreator
 	HeaderTokenWriter HeaderTokenWriter
 	Director          func(r *http.Request)
-	RejectOnNoToken   bool
 }
 
 func (teh TokenExchangeHandler) createToken(r *http.Request) (string, error) {
@@ -183,7 +183,8 @@ func (teh TokenExchangeHandler) ProxyHandler() func(w http.ResponseWriter, r *ht
 	proxy := &httputil.ReverseProxy{Director: teh.Director}
 	return func(w http.ResponseWriter, r *http.Request) {
 		token, err := teh.createToken(r)
-		if err != nil && teh.RejectOnNoToken {
+		if err != nil {
+			log.Println("auth failed : ", err)
 			w.WriteHeader(401)
 			return
 		} else {
