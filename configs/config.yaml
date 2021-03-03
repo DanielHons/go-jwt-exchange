@@ -1,9 +1,11 @@
 bind: "0:0:0:0:9002"
 token:
   in:
-    header:
+    header: "Authorization"
+    aud: ""
   out:
     jwt-secret: "jhlsgkfldsafjdslaöfhdsöajfkwqofj8394pnqeilnflnfjdsilafhjdsiöafbhjdsipdsfdsafadsfsda"
+    aud: ""
     ttl: 3
     header: "Authorization"
     mapped-claims:

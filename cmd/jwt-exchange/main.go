@@ -13,6 +13,7 @@ import (
 )
 
 type OutTokenConfig struct {
+	Audience     string            `yaml:"aud"`
 	JwtSecret    string            `yaml:"jwt-secret"`
 	TTL          int64             `yaml:"ttl"`
 	Header       string            `yaml:"header"`
@@ -21,7 +22,8 @@ type OutTokenConfig struct {
 }
 
 type InTokenConfig struct {
-	Header string `yaml:"header"`
+	Audience string `yaml:"aud"`
+	Header   string `yaml:"header"`
 }
 
 type TokenConfig struct {
@@ -70,17 +72,16 @@ func main() {
 	)
 
 	handler := jwt_exchange.TokenExchangeHandler{
-		ClaimsExtractor: jwt_exchange.JwksClaimsExtractor{
-			Validator: &jwksCache,
-			TokenReader: jwt_exchange.HeaderTokenReader{
-				HeaderName: config.Token.In.Header,
-				TrimPrefix: true,
-				Prefix:     bearerPrefix,
-			},
+		ClaimsExtractor: &jwt_exchange.BearerJwtClaimsExtractor{
+			Validator:  &jwksCache,
+			Audience:   config.Token.In.Audience,
+			HeaderName: config.Token.In.Header,
+			TrimPrefix: true,
+			Prefix:     bearerPrefix,
 		},
 		ClaimsMapper: jwt_exchange.FancyClaimsMapper{
 			TokenTTL:     readTokenLifetimeFromEnv(),
-			Audience:     "",
+			Audience:     config.Token.Out.Audience,
 			StaticClaims: config.Token.Out.StaticClaims,
 			MappedClaims: config.Token.Out.MappedClaims,
 		},
