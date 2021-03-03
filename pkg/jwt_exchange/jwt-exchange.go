@@ -1,6 +1,8 @@
 package jwt_exchange
 
 import (
+	"errors"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"log"
 	"net/http"
@@ -30,30 +32,17 @@ type ClaimsMapper interface {
 	MapClaims(claims jwt.MapClaims) (jwt.Claims, error)
 }
 
-type GenericClaimsMapper struct {
-	TokenTTL int64
-	Audience string
-}
-
-type StringExtractingClaimsMapper struct {
-	TokenTTL    int64
-	Audience    string
-	Extractor   func(claims jwt.MapClaims) string
-	OutClaimKey string
-}
-
-// Implement ClaimsMapper interface
-func (secm StringExtractingClaimsMapper) MapClaims(inClaims jwt.MapClaims) (jwt.Claims, error) {
-	outClaims := DefaultClaims(inClaims["sub"].(string), secm.TokenTTL, secm.Audience)
-	outClaims[secm.OutClaimKey] = secm.Extractor(inClaims)
-	return outClaims, nil
+type FancyClaimsMapper struct {
+	TokenTTL     int64
+	Audience     string
+	StaticClaims map[string]string
+	MappedClaims map[string]string
 }
 
 // Take subject from incoming claim, override iat,nbf,exp and potentially aud
-func DefaultClaims(sub string, ttl int64, aud string) jwt.MapClaims {
+func defaultClaims(ttl int64, aud string) jwt.MapClaims {
 	unix := time.Now().Unix()
 	mapClaims := jwt.MapClaims{}
-	mapClaims["sub"] = sub
 	mapClaims["iat"] = unix
 	mapClaims["nbf"] = unix
 	mapClaims["exp"] = unix + ttl
@@ -64,17 +53,15 @@ func DefaultClaims(sub string, ttl int64, aud string) jwt.MapClaims {
 	return mapClaims
 }
 
-func (gtm GenericClaimsMapper) MapClaims(claims jwt.MapClaims) (jwt.Claims, error) {
-	return DefaultClaims(claims["sub"].(string), gtm.TokenTTL, gtm.Audience), nil
-}
-
-type TokenExchangeConfig struct {
-	ClaimsExtractor         ClaimsExtractor
-	ReplacementTokenCreator TokenCreator
-	OutgoingTokenHeader     string
-	OutgoingTokenPrefix     string
-	ProxyBindAddress        string
-	TargetUrl               string
+func (fcm FancyClaimsMapper) MapClaims(claims jwt.MapClaims) (jwt.Claims, error) {
+	outClaims := defaultClaims(fcm.TokenTTL, fcm.Audience)
+	for r, s := range fcm.StaticClaims {
+		outClaims[r] = s
+	}
+	for r, s := range fcm.MappedClaims {
+		outClaims[r] = claims[s]
+	}
+	return outClaims, nil
 }
 
 type TokenHeaderField struct {
@@ -135,30 +122,6 @@ func (htw HeaderTokenWriter) Write(r *http.Request, token string) {
 	r.Header.Set(htw.HeaderName, newToken)
 }
 
-type HeaderTokenReader struct {
-	HeaderName string
-	TrimPrefix bool
-	Prefix     string
-}
-
-func (htr HeaderTokenReader) Read(r *http.Request) string {
-	tokenHeader := r.Header.Get(htr.HeaderName)
-	if htr.TrimPrefix && strings.HasPrefix(tokenHeader, htr.Prefix) {
-		tokenHeader = strings.TrimPrefix(tokenHeader, htr.Prefix)
-	}
-	r.Header.Set(htr.HeaderName, "") // Do not forward
-	return tokenHeader
-}
-
-type JwksClaimsExtractor struct {
-	Validator   TokenValidator
-	TokenReader TokenReader
-}
-
-func (extractor JwksClaimsExtractor) Extract(r *http.Request) (jwt.MapClaims, error) {
-	return extractor.Validator.Validate(extractor.TokenReader.Read(r))
-}
-
 type TokenExchangeHandler struct {
 	ClaimsExtractor   ClaimsExtractor
 	ClaimsMapper      ClaimsMapper
@@ -192,4 +155,52 @@ func (teh TokenExchangeHandler) ProxyHandler() func(w http.ResponseWriter, r *ht
 			proxy.ServeHTTP(w, r)
 		}
 	}
+}
+
+type BearerJwtClaimsExtractor struct {
+	HeaderName string
+	TrimPrefix bool
+	Prefix     string
+	Audience   string
+	Validator  TokenValidator
+}
+
+func (ce *BearerJwtClaimsExtractor) Extract(r *http.Request) (jwt.MapClaims, error) {
+	tokenString := r.Header.Get(ce.HeaderName)
+	if ce.TrimPrefix && strings.HasPrefix(tokenString, ce.Prefix) {
+		tokenString = strings.TrimPrefix(tokenString, ce.Prefix)
+	}
+	r.Header.Set(ce.HeaderName, "") // Do not forward
+
+	validate, err := ce.Validator.Validate(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ce.checkAudience(validate["aud"])
+	if err != nil {
+		return nil, err
+	}
+
+	return validate, nil
+}
+
+func (ce *BearerJwtClaimsExtractor) checkAudience(givenAud interface{}) error {
+	switch x := givenAud.(type) {
+	case []interface{}:
+		for _, i := range x {
+			if i == ce.Audience {
+				return nil // required audience was found
+			}
+			return errors.New("required audience not found in given token")
+		}
+	case interface{}:
+		if x != ce.Audience {
+			return errors.New("wrong audience in given token")
+		}
+	default:
+		fmt.Printf("Unsupported type for audience: %T\n", x)
+		return errors.New("unsupported type for audience")
+	}
+	return errors.New("missing audience")
 }

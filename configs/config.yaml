@@ -1,0 +1,16 @@
+bind: "0:0:0:0:9002"
+token:
+  in:
+    header: "Authorization"
+    aud: ""
+  out:
+    jwt-secret: "jhlsgkfldsafjdslaöfhdsöajfkwqofj8394pnqeilnflnfjdsilafhjdsiöafbhjdsipdsfdsafadsfsda"
+    aud: ""
+    ttl: 3
+    header: "Authorization"
+    mapped-claims:
+      user: "email"
+    static-claims:
+      role: "user"
+jwks-url: "http://url.to/jwks.json"
+upstream: "http:localhost:3000"

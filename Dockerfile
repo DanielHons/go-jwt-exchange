@@ -3,7 +3,7 @@ RUN go get github.com/dgrijalva/jwt-go
 WORKDIR /go/src/app
 ADD ./ ./
 # build the source
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/go-jwt-exchange
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/jwt-exchange
 
 # use a minimal alpine image
 FROM alpine:3.7
