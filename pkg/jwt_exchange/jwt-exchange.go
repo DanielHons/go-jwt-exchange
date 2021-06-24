@@ -3,7 +3,7 @@ package jwt_exchange
 import (
 	"errors"
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"log"
 	"net/http"
 	"net/http/httputil"

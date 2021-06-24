@@ -1,7 +1,7 @@
 package jwt_exchange
 
 import (
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"testing"
 )
 

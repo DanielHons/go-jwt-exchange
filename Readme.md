@@ -17,7 +17,7 @@ package main
 
 import (
 	jwtexchange "github.com/DanielHons/go-jwt-exchange/jwt_exchange"
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt"
 	"time"
 )
 

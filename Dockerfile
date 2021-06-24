@@ -1,5 +1,5 @@
 FROM golang:1.15.0-buster as builder
-RUN go get github.com/dgrijalva/jwt-go
+RUN go get github.com/golang-jwt/jwt
 WORKDIR /go/src/app
 ADD ./ ./
 # build the source
