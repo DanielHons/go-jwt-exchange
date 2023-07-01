@@ -1,6 +1,7 @@
 package jwt_exchange
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt"
@@ -12,7 +13,7 @@ import (
 type jwksCache struct {
 	JwksUrl     string
 	lastRefresh int64
-	jwkSet      *jwk.Set
+	jwkSet      jwk.Set
 }
 
 func StartNewJwkCache(jwksUrl string, refreshInterval time.Duration, stopOnError bool) jwksCache {
@@ -50,7 +51,7 @@ func (cache jwksCache) reload() {
 }
 
 func (cache *jwksCache) reloadInner() error {
-	set, err := jwk.FetchHTTP(cache.JwksUrl)
+	set, err := jwk.Fetch(context.TODO(), cache.JwksUrl)
 	if err != nil {
 		return err
 	}
@@ -66,13 +67,18 @@ func (cache *jwksCache) getKey(token *jwt.Token) (interface{}, error) {
 		return nil, errors.New("expecting JWT header to have string kid")
 	}
 
-	if key := cache.jwkSet.LookupKeyID(keyID); len(key) == 1 {
-		var k interface{}
-		err := key[0].Raw(&k)
-		return k, err
+	key, hasMore := cache.jwkSet.LookupKeyID(keyID)
+	if hasMore {
+		log.Println("key with kid not unuque: " + keyID)
 	}
 
-	return nil, fmt.Errorf("unable to find key %q", keyID)
+	if key == nil {
+		return nil, fmt.Errorf("unable to find key %q", keyID)
+	}
+
+	var k interface{}
+	err := key.Raw(&k)
+	return k, err
 }
 
 func (cache *jwksCache) Validate(tokenString string) (jwt.MapClaims, error) {
