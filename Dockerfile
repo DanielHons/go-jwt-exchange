@@ -1,7 +1,7 @@
-FROM golang:1.15.0-buster as builder
-RUN go get github.com/golang-jwt/jwt
+FROM golang:1.18.0-buster as builder
 WORKDIR /go/src/app
 ADD ./ ./
+RUN go mod download
 # build the source
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/jwt-exchange
 
